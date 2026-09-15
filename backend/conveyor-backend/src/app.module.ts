@@ -4,6 +4,8 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { validateEnv } from './config/env.validation';
+import { JobsModule } from './jobs/jobs.module';
+
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true, validate: validateEnv }),
@@ -16,6 +18,7 @@ import { validateEnv } from './config/env.validation';
         synchronize: false,
       }),
     }),
+    JobsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
