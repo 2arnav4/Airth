@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import { ApiError } from './api/api-error';
 import { CreateJobForm } from './components/CreateJobForm';
-import { FilterTabs } from './components/FilterTabs';
 import { JobList } from './components/JobList';
 import { Notice } from './components/Notice';
 import { StatusCounts } from './components/StatusCounts';
+import { GHOST_STYLE } from './components/status-styles';
 import {
   useCreateJob,
   useDeleteJob,
@@ -33,7 +33,7 @@ export default function App() {
     if (error instanceof ApiError) {
       setNotice(
         error.isConflict
-          ? `${error.message} The list has been refreshed.`
+          ? `${error.message} The queue has been refreshed.`
           : error.message,
       );
       return;
@@ -83,33 +83,50 @@ export default function App() {
       : undefined;
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900">
-      <header className="border-b border-slate-200 bg-white">
-        <div className="mx-auto flex max-w-4xl flex-wrap items-center justify-between gap-2 px-4 py-4">
-          <div>
-            <h1 className="text-xl font-semibold tracking-tight">Conveyor</h1>
-            <p className="text-sm text-slate-600">
-              A queue of background jobs: create one, start it, and record
-              whether it finished or failed.
-            </p>
+    <div className="min-h-screen bg-canvas text-ink">
+      <header className="border-b border-edge bg-surface">
+        <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-3 px-4 py-5">
+          <div className="flex items-baseline gap-3">
+            <h1 className="text-2xl font-bold tracking-tight">
+              Conveyor
+            </h1>
+            <span className="hidden text-sm text-faint sm:inline">
+              job queue control
+            </span>
           </div>
 
-          <button
-            type="button"
-            onClick={() => {
-              void jobsQuery.refetch();
-              void statsQuery.refetch();
-            }}
-            disabled={isRefreshing}
-            className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:opacity-50"
-          >
-            {isRefreshing ? 'Refreshing…' : 'Refresh'}
-          </button>
+          <div className="flex items-center gap-3">
+            <span className="flex items-center gap-2 text-[13px] text-faint">
+              <span
+                className={`h-1.5 w-1.5 rounded-full ${
+                  loadError ? 'bg-rose-400' : 'bg-emerald-400'
+                }`}
+              />
+              {loadError ? 'api unreachable' : 'api connected'}
+            </span>
+
+            <button
+              type="button"
+              onClick={() => {
+                void jobsQuery.refetch();
+                void statsQuery.refetch();
+              }}
+              disabled={isRefreshing}
+              className={GHOST_STYLE}
+            >
+              {isRefreshing ? 'Syncing…' : 'Refresh'}
+            </button>
+          </div>
         </div>
       </header>
 
-      <main className="mx-auto max-w-4xl space-y-6 px-4 py-8">
-        <StatusCounts stats={statsQuery.data} isLoading={statsQuery.isLoading} />
+      <main className="mx-auto max-w-5xl space-y-4 px-4 py-8">
+        <StatusCounts
+          stats={statsQuery.data}
+          isLoading={statsQuery.isLoading}
+          active={filter}
+          onSelect={setFilter}
+        />
 
         {loadError && (
           <Notice
@@ -135,18 +152,11 @@ export default function App() {
           isSubmitting={createJob.isPending}
         />
 
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <FilterTabs value={filter} onChange={setFilter} />
-
-          <p className="text-xs text-slate-500">
-            {jobsQuery.data?.length ?? 0} shown
-          </p>
-        </div>
-
         <JobList
           jobs={jobsQuery.data}
           isLoading={jobsQuery.isLoading}
           busyJobId={busyJobId}
+          filterLabel={filter}
           onChangeStatus={handleChangeStatus}
           onDelete={handleDelete}
         />

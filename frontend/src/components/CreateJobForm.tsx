@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from 'react';
 import type { CreateJobInput } from '../types';
+import { PRIMARY_STYLE } from './status-styles';
 
 interface Props {
   onSubmit: (input: CreateJobInput) => Promise<unknown>;
@@ -30,22 +31,25 @@ export function CreateJobForm({ onSubmit, isSubmitting }: Props) {
   }
 
   const field =
-    'w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10';
+    'w-full rounded-lg border border-edge bg-canvas px-3 py-2.5 text-[15px] text-ink outline-none transition placeholder:text-faint focus:border-sky-500/70 focus:ring-2 focus:ring-sky-500/20';
 
   return (
     <form
       onSubmit={handleSubmit}
-      className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm"
+      className="rounded-xl border border-edge bg-surface"
     >
-      <div className="flex items-baseline justify-between">
-        <h2 className="text-sm font-semibold text-slate-900">New job</h2>
-        <p className="text-xs text-slate-500">Every job starts as pending</p>
-      </div>
+      <header className="flex items-center justify-between border-b border-edge px-5 py-3">
+        <h2 className="text-sm font-semibold uppercase tracking-wider text-muted">
+          New job
+        </h2>
+        <span className="text-[13px] text-faint">starts as pending</span>
+      </header>
 
-      <div className="mt-3 grid gap-3 sm:grid-cols-[minmax(0,2fr)_minmax(0,1fr)_auto_auto]">
+      <div className="grid gap-3 px-5 py-4 sm:grid-cols-[minmax(0,2fr)_minmax(0,1fr)_auto_auto] sm:items-center">
         <label className="block">
           <span className="sr-only">Title</span>
           <input
+            id="job-title"
             value={title}
             onChange={(event) => setTitle(event.target.value)}
             placeholder="Send welcome email"
@@ -57,6 +61,7 @@ export function CreateJobForm({ onSubmit, isSubmitting }: Props) {
         <label className="block">
           <span className="sr-only">Type</span>
           <input
+            id="job-type"
             value={type}
             onChange={(event) => setType(event.target.value)}
             placeholder="email"
@@ -65,24 +70,21 @@ export function CreateJobForm({ onSubmit, isSubmitting }: Props) {
           />
         </label>
 
-        <label className="flex items-center gap-2 text-sm text-slate-600">
+        <label className="flex items-center gap-2 text-sm text-muted">
           <span className="whitespace-nowrap">Priority</span>
           <input
+            id="job-priority"
             type="number"
             min={0}
             max={10}
             value={priority}
             onChange={(event) => setPriority(Number(event.target.value))}
-            className={`${field} w-20`}
+            className={`${field} w-20 tabular-nums`}
           />
         </label>
 
-        <button
-          type="submit"
-          disabled={!canSubmit}
-          className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-400"
-        >
-          {isSubmitting ? 'Creating…' : 'Create job'}
+        <button type="submit" disabled={!canSubmit} className={PRIMARY_STYLE}>
+          {isSubmitting ? 'Adding…' : 'Add job'}
         </button>
       </div>
     </form>
