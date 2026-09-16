@@ -242,14 +242,45 @@ authentication, the database role would be narrowed from owner to
 ## References
 
 Sources that informed specific decisions, rather than a general reading list.
+The reasoning I went through with each is recorded, not just the link.
 
 | Source | What it settled |
 |---|---|
 | [NestJS — First steps](https://docs.nestjs.com/first-steps) | Module / controller / service structure, and the CLI's file-naming convention (`kebab-case.type.ts`), which this repo follows throughout |
 | [NestJS request lifecycle, explained (DEV)](https://dev.to/parsajiravand/nestjs-request-lifecycle-explained-with-cheat-sheet-227l) | Where each guard sits in the chain: why `ParseUUIDPipe` and the `ValidationPipe` run before the controller, and why the exception filter catches everything after |
-| [A NestJS banking ledger that cannot be overdrawn (DEV)](https://dev.to/peacemelodi/i-built-a-nestjs-banking-ledger-that-cannot-be-overdrawn-even-under-concurrent-requests-421l) | The lost-update anomaly, and the case for a pessimistic `SELECT … FOR UPDATE` lock. I deliberately did **not** follow it here: that ledger must read a balance and do arithmetic before deciding, so it needs a lock held across the read and the write. A job transition is a plain equality check that fits inside the `WHERE` clause, so an atomic conditional update is enough and costs one round trip instead of three. The comparison is in "The concurrency problem" above |
+| [A NestJS banking ledger that cannot be overdrawn (DEV)](https://dev.to/peacemelodi/i-built-a-nestjs-banking-ledger-that-cannot-be-overdrawn-even-under-concurrent-requests-421l) | The lost-update anomaly, and the case for a pessimistic `SELECT … FOR UPDATE` lock. **I read this first and deliberately did not follow it** — see the note below |
 | [NestJS configuration docs](https://docs.nestjs.com/techniques/configuration) | `ConfigModule.forRoot({ validate })` and the `forRootAsync` pattern, so the database URL is validated before TypeORM ever sees it |
 | [TypeORM 1.0 release notes](https://typeorm.io/blog/typeorm-1-0/) | Why this project pins TypeORM `0.3.31`: v1 had just landed and most NestJS material still targets 0.3 |
+
+### Why I did not use the lock from the ledger article
+
+This was the decision I spent the most time on, so the reasoning is worth recording.
+
+The article is correct for its own problem. A ledger must **read the balance, do
+arithmetic, and then decide**: `balance - 60 >= 0`. That question cannot be
+expressed in a `WHERE` clause, so the row has to be held still between the read
+and the write, which is exactly what `SELECT … FOR UPDATE` is for.
+
+My rule is not arithmetic. It is a plain equality check: *is this job still
+`pending`?* That fits inside the statement, so the check and the write become one
+thing and there is nothing to hold still:
+
+```sql
+UPDATE jobs SET status = 'running'
+WHERE id = $1 AND status IN ('pending');
+```
+
+| | This project | The ledger |
+|---|---|---|
+| The question | `status = 'pending'`? | `balance - amount >= 0`? |
+| Expressible in a `WHERE`? | Yes | No, it needs a read then arithmetic |
+| So | Atomic conditional update, one round trip | Pessimistic lock, three or more |
+| The loser | Fails immediately with 409 | Waits for the lock, then fails |
+
+A lock here would cost extra round trips and turn every contended job into a
+queue, while buying no correctness the `WHERE` clause does not already provide.
+If a future rule needed data I had to read and compute first — deducting from a
+quota, say — I would switch to the lock for that operation.
 
 ## Assumptions
 
