@@ -68,15 +68,23 @@ export class JobsController {
 }
 
 /**
- * An If-Match header carries the version the client last saw, optionally
- * quoted as an ETag: `If-Match: "3"`. Absent means "no version check".
+ * An If-Match header carries the version the client last saw. It may arrive
+ * bare (`3`), quoted (`"3"`), or as the weak ETag we send back (`W/"3"`).
+ * `*` means "any version", which is the same as not checking at all.
+ * Absent means "no version check".
  */
 function parseIfMatch(ifMatch?: string): number | undefined {
   if (ifMatch === undefined) {
     return undefined;
   }
 
-  const version = Number(ifMatch.trim().replace(/^"|"$/g, ''));
+  const value = ifMatch.trim();
+
+  if (value === '*') {
+    return undefined;
+  }
+
+  const version = Number(value.replace(/^W\//, '').replace(/^"|"$/g, ''));
 
   if (!Number.isInteger(version) || version < 1) {
     throw new BadRequestException('If-Match must be a job version number');
