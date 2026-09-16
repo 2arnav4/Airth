@@ -9,8 +9,10 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 
   try {
     response = await fetch(`${API_URL}${path}`, {
-      headers: { "Content-Type": "application/json", ...init?.headers },
       ...init,
+      // Headers must be merged AFTER ...init, or init's own headers replace
+      // the whole object and Content-Type is lost.
+      headers: { "Content-Type": "application/json", ...init?.headers },
     });
   } catch {
     // fetch only rejects when the network itself failed.

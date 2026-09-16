@@ -16,7 +16,9 @@ import type { CreateJobInput, Job, JobStatus } from './types';
 
 export default function App() {
   const [filter, setFilter] = useState<JobStatus | 'all'>('all');
-  const [notice, setNotice] = useState<string | undefined>();
+  const [notice, setNotice] = useState<
+    { tone: 'error' | 'warning'; message: string } | undefined
+  >();
 
   const jobsQuery = useJobs(filter === 'all' ? undefined : filter);
   const statsQuery = useJobStats();
@@ -30,16 +32,19 @@ export default function App() {
 
   /** Conflicts are expected, not crashes: explain, and let the refetch show the truth. */
   function reportFailure(error: unknown, fallback: string) {
-    if (error instanceof ApiError) {
-      setNotice(
-        error.isConflict
-          ? `${error.message} The queue has been refreshed.`
-          : error.message,
-      );
+    if (error instanceof ApiError && error.isConflict) {
+      // 409/412: someone else got there first. Expected, not a crash.
+      setNotice({
+        tone: 'warning',
+        message: `${error.message} The queue has been refreshed.`,
+      });
       return;
     }
 
-    setNotice(fallback);
+    setNotice({
+      tone: 'error',
+      message: error instanceof ApiError ? error.message : fallback,
+    });
   }
 
   async function handleCreate(input: CreateJobInput) {
@@ -141,8 +146,8 @@ export default function App() {
 
         {notice && (
           <Notice
-            tone="warning"
-            message={notice}
+            tone={notice.tone}
+            message={notice.message}
             onDismiss={() => setNotice(undefined)}
           />
         )}
