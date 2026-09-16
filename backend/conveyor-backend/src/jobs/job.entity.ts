@@ -19,6 +19,9 @@ export class Job {
   @Column({ type: 'varchar', length: 50 })
   type: string;
 
+  @Column({ type: 'int', default: 0 })
+  priority: number;
+
   @Column({
     type: 'enum',
     enum: JobStatus,
