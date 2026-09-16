@@ -77,7 +77,17 @@ export function JobRow({ job, onChangeStatus, onDelete, isBusy }: Props) {
         <button
           type="button"
           disabled={isBusy}
-          onClick={() => onDelete(job)}
+          onClick={() => {
+            // Deleting is the only irreversible action here, and a running job
+            // is work in progress, so make the operator say it twice.
+            if (
+              window.confirm(
+                `Delete "${job.title}"? This cannot be undone.`,
+              )
+            ) {
+              onDelete(job);
+            }
+          }}
           aria-label={`Delete ${job.title}`}
           className={DELETE_STYLE}
         >

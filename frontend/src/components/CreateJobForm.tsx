@@ -3,17 +3,27 @@ import type { CreateJobInput } from '../types';
 import { PRIMARY_STYLE } from './status-styles';
 
 interface Props {
-  onSubmit: (input: CreateJobInput) => Promise<unknown>;
+  /** Resolves true when the job was created; false leaves the form filled in. */
+  onSubmit: (input: CreateJobInput) => Promise<boolean>;
   isSubmitting: boolean;
 }
 
 export function CreateJobForm({ onSubmit, isSubmitting }: Props) {
   const [title, setTitle] = useState('');
   const [type, setType] = useState('');
-  const [priority, setPriority] = useState(0);
+  // Kept as a string so the field can be emptied while typing; "" would
+  // otherwise become Number("") === 0 and snap back under the cursor.
+  const [priority, setPriority] = useState('0');
+
+  const priorityValue = priority === '' ? 0 : Number(priority);
+  const priorityIsValid =
+    Number.isInteger(priorityValue) && priorityValue >= 0 && priorityValue <= 10;
 
   const canSubmit =
-    title.trim().length > 0 && type.trim().length > 0 && !isSubmitting;
+    title.trim().length > 0 &&
+    type.trim().length > 0 &&
+    priorityIsValid &&
+    !isSubmitting;
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
@@ -23,11 +33,18 @@ export function CreateJobForm({ onSubmit, isSubmitting }: Props) {
     }
 
     // The server validates too; this only avoids an obviously doomed request.
-    await onSubmit({ title: title.trim(), type: type.trim(), priority });
+    const created = await onSubmit({
+      title: title.trim(),
+      type: type.trim(),
+      priority: priorityValue,
+    });
 
-    setTitle('');
-    setType('');
-    setPriority(0);
+    // Only clear on success: a rejected job would otherwise lose the typing.
+    if (created) {
+      setTitle('');
+      setType('');
+      setPriority('0');
+    }
   }
 
   const field =
@@ -42,7 +59,9 @@ export function CreateJobForm({ onSubmit, isSubmitting }: Props) {
         <h2 className="text-sm font-semibold uppercase tracking-wider text-muted">
           New job
         </h2>
-        <span className="text-[13px] text-faint">starts as pending</span>
+        <span className="text-[13px] text-faint">
+          {priorityIsValid ? 'starts as pending' : 'priority must be 0–10'}
+        </span>
       </header>
 
       <div className="grid gap-3 px-5 py-4 sm:grid-cols-[minmax(0,2fr)_minmax(0,1fr)_auto_auto] sm:items-center">
@@ -78,8 +97,11 @@ export function CreateJobForm({ onSubmit, isSubmitting }: Props) {
             min={0}
             max={10}
             value={priority}
-            onChange={(event) => setPriority(Number(event.target.value))}
-            className={`${field} w-20 tabular-nums`}
+            onChange={(event) => setPriority(event.target.value)}
+            aria-invalid={!priorityIsValid}
+            className={`${field} w-20 tabular-nums ${
+              priorityIsValid ? '' : 'border-rose-500/70'
+            }`}
           />
         </label>
 

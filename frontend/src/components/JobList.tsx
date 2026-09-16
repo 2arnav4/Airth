@@ -4,7 +4,7 @@ import { JobRow } from './JobRow';
 interface Props {
   jobs?: Job[];
   isLoading: boolean;
-  busyJobId?: string;
+  busyIds: ReadonlySet<string>;
   filterLabel: string;
   onChangeStatus: (job: Job, next: JobStatus) => void;
   onDelete: (job: Job) => void;
@@ -13,7 +13,7 @@ interface Props {
 export function JobList({
   jobs,
   isLoading,
-  busyJobId,
+  busyIds,
   filterLabel,
   onChangeStatus,
   onDelete,
@@ -49,7 +49,7 @@ export function JobList({
               job={job}
               onChangeStatus={onChangeStatus}
               onDelete={onDelete}
-              isBusy={busyJobId === job.id}
+              isBusy={busyIds.has(job.id)}
             />
           ))}
         </ul>

@@ -19,6 +19,8 @@ export default function App() {
   const [notice, setNotice] = useState<
     { tone: 'error' | 'warning'; message: string } | undefined
   >();
+  // Several rows can be mid-flight at once, so track ids rather than one id.
+  const [busyIds, setBusyIds] = useState<ReadonlySet<string>>(new Set());
 
   const jobsQuery = useJobs(filter === 'all' ? undefined : filter);
   const statsQuery = useJobStats();
@@ -47,18 +49,35 @@ export default function App() {
     });
   }
 
-  async function handleCreate(input: CreateJobInput) {
+  function markBusy(id: string, busy: boolean) {
+    setBusyIds((current) => {
+      const next = new Set(current);
+      if (busy) {
+        next.add(id);
+      } else {
+        next.delete(id);
+      }
+
+      return next;
+    });
+  }
+
+  /** Returns true when the job was created, so the form knows whether to clear. */
+  async function handleCreate(input: CreateJobInput): Promise<boolean> {
     setNotice(undefined);
 
     try {
       await createJob.mutateAsync(input);
+      return true;
     } catch (error) {
       reportFailure(error, 'Could not create the job.');
+      return false;
     }
   }
 
   async function handleChangeStatus(job: Job, next: JobStatus) {
     setNotice(undefined);
+    markBusy(job.id, true);
 
     try {
       await updateStatus.mutateAsync({
@@ -68,24 +87,23 @@ export default function App() {
       });
     } catch (error) {
       reportFailure(error, 'Could not update the job.');
+    } finally {
+      markBusy(job.id, false);
     }
   }
 
   async function handleDelete(job: Job) {
     setNotice(undefined);
+    markBusy(job.id, true);
 
     try {
       await deleteJob.mutateAsync(job.id);
     } catch (error) {
       reportFailure(error, 'Could not delete the job.');
+    } finally {
+      markBusy(job.id, false);
     }
   }
-
-  const busyJobId = updateStatus.isPending
-    ? updateStatus.variables?.id
-    : deleteJob.isPending
-      ? deleteJob.variables
-      : undefined;
 
   return (
     <div className="min-h-screen bg-canvas text-ink">
@@ -160,7 +178,7 @@ export default function App() {
         <JobList
           jobs={jobsQuery.data}
           isLoading={jobsQuery.isLoading}
-          busyJobId={busyJobId}
+          busyIds={busyIds}
           filterLabel={filter}
           onChangeStatus={handleChangeStatus}
           onDelete={handleDelete}

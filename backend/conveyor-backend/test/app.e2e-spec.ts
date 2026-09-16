@@ -1,15 +1,16 @@
 import { afterAll, beforeAll, describe, expect, it } from 'bun:test';
-import { INestApplication, ValidationPipe } from '@nestjs/common';
+import { INestApplication } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import request from 'supertest';
 import { App } from 'supertest/types';
-import { HttpExceptionFilter } from './../src/common/http-exception.filter';
 import { AppModule } from './../src/app.module';
+import { configureApp } from './../src/configure-app';
 
 /**
  * These hit the real database, so they clean up after themselves.
- * The app is configured exactly as main.ts configures it; otherwise the
- * tests would pass while production behaved differently.
+ * configureApp() is the same function main.ts calls, so the pipes, the
+ * exception filter, the ETag policy and CORS are identical here and in
+ * production. A test cannot pass against a differently-wired app.
  */
 describe('Jobs API (e2e)', () => {
   let app: INestApplication<App>;
@@ -21,14 +22,7 @@ describe('Jobs API (e2e)', () => {
     }).compile();
 
     app = moduleFixture.createNestApplication();
-    app.useGlobalPipes(
-      new ValidationPipe({
-        whitelist: true,
-        forbidNonWhitelisted: true,
-        transform: true,
-      }),
-    );
-    app.useGlobalFilters(new HttpExceptionFilter());
+    configureApp(app);
     await app.init();
   });
 

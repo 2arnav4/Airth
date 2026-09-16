@@ -5,11 +5,34 @@ import {
   PreconditionFailedException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { FindOptionsWhere, In, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 import { CreateJobDto } from './dto/create-job.dto';
 import { JobStatus } from './job-status.enum';
 import { Job } from './job.entity';
 import { statusesThatCanBecome } from './job-transitions';
+
+/** A row exactly as Postgres returns it: snake_case, numerics as strings. */
+interface JobRow {
+  id: string;
+  title: string;
+  type: string;
+  priority: number;
+  status: JobStatus;
+  version: number;
+  created_at: Date;
+}
+
+function toJob(row: JobRow): Job {
+  return {
+    id: row.id,
+    title: row.title,
+    type: row.type,
+    priority: Number(row.priority),
+    status: row.status,
+    version: Number(row.version),
+    createdAt: row.created_at,
+  };
+}
 
 @Injectable()
 export class JobsService {
@@ -52,22 +75,23 @@ export class JobsService {
     const allowedFrom = statusesThatCanBecome(next);
 
     if (allowedFrom.length > 0) {
-      const criteria: FindOptionsWhere<Job> = {
-        id,
-        status: In(allowedFrom),
-      };
+      const query = this.jobsRepository
+        .createQueryBuilder()
+        .update(Job)
+        .set({ status: next, version: () => '"version" + 1' })
+        .where('id = :id', { id })
+        .andWhere('status IN (:...allowedFrom)', { allowedFrom });
 
       if (expectedVersion !== undefined) {
-        criteria.version = expectedVersion;
+        query.andWhere('version = :expectedVersion', { expectedVersion });
       }
 
-      const result = await this.jobsRepository.update(criteria, {
-        status: next,
-        version: () => '"version" + 1',
-      });
+      // RETURNING hands back the row this statement wrote. A second SELECT
+      // could read a newer row written by someone else in between.
+      const result = await query.returning('*').execute();
 
       if (result.affected === 1) {
-        return this.findOneOrFail(id);
+        return toJob(result.raw[0] as JobRow);
       }
     }
 
