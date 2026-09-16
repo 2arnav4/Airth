@@ -1,9 +1,14 @@
-import { Injectable } from '@nestjs/common';
+import {
+  Injectable,
+  ConflictException,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import { CreateJobDto } from './dto/create-job.dto';
 import { JobStatus } from './job-status.enum';
 import { Job } from './job.entity';
+import { statusesThatCanBecome } from './job-transitions';
 
 @Injectable()
 export class JobsService {
@@ -27,5 +32,39 @@ export class JobsService {
       where: status ? { status } : {},
       order: { createdAt: 'DESC' },
     });
+  }
+  async updateStatus(id: string, next: JobStatus): Promise<Job> {
+    const allowedFrom = statusesThatCanBecome(next);
+
+    if (allowedFrom.length > 0) {
+      const result = await this.jobsRepository.update(
+        { id, status: In(allowedFrom) },
+        { status: next },
+      );
+
+      if (result.affected === 1) {
+        return this.findOneOrFail(id);
+      }
+    }
+
+    const job = await this.jobsRepository.findOneBy({ id });
+
+    if (!job) {
+      throw new NotFoundException(`Job ${id} not found`);
+    }
+
+    throw new ConflictException(
+      `Cannot change status from "${job.status}" to "${next}"`,
+    );
+  }
+
+  private async findOneOrFail(id: string): Promise<Job> {
+    const job = await this.jobsRepository.findOneBy({ id });
+
+    if (!job) {
+      throw new NotFoundException(`Job ${id} not found`);
+    }
+
+    return job;
   }
 }
