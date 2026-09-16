@@ -30,6 +30,9 @@ export class Job {
   })
   status: JobStatus;
 
+  @Column({ type: 'int', default: 1 })
+  version: number;
+
   @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
   createdAt: Date;
 }

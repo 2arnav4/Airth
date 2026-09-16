@@ -1,9 +1,8 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
 import { validateEnv } from './config/env.validation';
+import { HealthController } from './health/health.controller';
 import { JobsModule } from './jobs/jobs.module';
 
 @Module({
@@ -20,7 +19,6 @@ import { JobsModule } from './jobs/jobs.module';
     }),
     JobsModule,
   ],
-  controllers: [AppController],
-  providers: [AppService],
+  controllers: [HealthController],
 })
 export class AppModule {}
