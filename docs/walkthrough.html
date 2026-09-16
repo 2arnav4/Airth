@@ -1,0 +1,600 @@
+<title>Conveyor Engineering Notes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Serif:ital,wght@0,400;0,500;1,400&display=swap">
+
+<style>
+  :root {
+    --ink: #14181f;
+    --ink-soft: #454f5e;
+    --ink-faint: #737f90;
+    --ground: #f6f6f4;
+    --panel: #ffffff;
+    --rule: #dcdfe4;
+    --rule-soft: #e9ebee;
+    --accent: #2f4fb3;
+    --accent-soft: #e8ecf9;
+    --pending: #77808f;
+    --running: #2f6fd0;
+    --done: #167a5b;
+    --failed: #b4392f;
+    --code-bg: #f0f1ee;
+
+    --display: 'IBM Plex Sans Condensed', 'Helvetica Neue', Arial, sans-serif;
+    --body: 'IBM Plex Serif', Georgia, 'Times New Roman', serif;
+    --mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ink: #e8eaee;
+      --ink-soft: #a7b0bd;
+      --ink-faint: #7b8593;
+      --ground: #111419;
+      --panel: #181c23;
+      --rule: #2a303a;
+      --rule-soft: #22272f;
+      --accent: #8aa4f0;
+      --accent-soft: #1d2434;
+      --pending: #8b94a3;
+      --running: #6d9ceb;
+      --done: #4bbb92;
+      --failed: #e0796d;
+      --code-bg: #1e232b;
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --ink: #e8eaee;
+    --ink-soft: #a7b0bd;
+    --ink-faint: #7b8593;
+    --ground: #111419;
+    --panel: #181c23;
+    --rule: #2a303a;
+    --rule-soft: #22272f;
+    --accent: #8aa4f0;
+    --accent-soft: #1d2434;
+    --pending: #8b94a3;
+    --running: #6d9ceb;
+    --done: #4bbb92;
+    --failed: #e0796d;
+    --code-bg: #1e232b;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--ink);
+    font-family: var(--body);
+    font-size: 16.5px;
+    line-height: 1.62;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap {
+    max-width: 1080px;
+    margin: 0 auto;
+    padding-inline: 20px;
+    padding-block: 40px 72px;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 40px;
+  }
+
+  @media (min-width: 900px) {
+    .wrap { grid-template-columns: 188px minmax(0, 1fr); gap: 56px; }
+    nav.toc { position: sticky; top: env(safe-area-inset-top, 0px); align-self: start; padding-top: 8px; }
+  }
+
+  /* ---------- masthead ---------- */
+  header.masthead { grid-column: 1 / -1; border-bottom: 2px solid var(--ink); padding-bottom: 18px; }
+  .kicker {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+  }
+  h1 {
+    font-family: var(--display);
+    font-weight: 700;
+    font-size: clamp(2.3rem, 6vw, 3.4rem);
+    line-height: 1.02;
+    letter-spacing: -0.015em;
+    margin: 8px 0 6px;
+    text-wrap: balance;
+  }
+  .standfirst { margin: 0; max-width: 62ch; color: var(--ink-soft); font-size: 1.05rem; }
+
+  .facts { display: flex; flex-wrap: wrap; gap: 26px; margin-top: 22px; }
+  .fact .n {
+    font-family: var(--display);
+    font-size: 1.7rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+  }
+  .fact .l {
+    font-family: var(--mono);
+    font-size: 10.5px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    display: block;
+    margin-top: 5px;
+  }
+
+  /* ---------- toc ---------- */
+  nav.toc ol { list-style: none; margin: 0; padding: 0; display: grid; gap: 7px; }
+  nav.toc a {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--ink-soft);
+    text-decoration: none;
+    display: flex;
+    gap: 8px;
+  }
+  nav.toc a:hover { color: var(--accent); }
+  nav.toc .num { color: var(--ink-faint); }
+
+  /* ---------- sections ---------- */
+  main { display: grid; gap: 52px; min-width: 0; }
+  section { scroll-margin-top: 24px; }
+  h2 {
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: 1.62rem;
+    letter-spacing: -0.01em;
+    margin: 0 0 4px;
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+  }
+  h2 .num {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--accent);
+    letter-spacing: 0.08em;
+  }
+  h3 {
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: 1.04rem;
+    margin: 30px 0 8px;
+    letter-spacing: 0.005em;
+  }
+  p { margin: 0 0 14px; max-width: 68ch; }
+  .lede { color: var(--ink-soft); }
+  strong { font-weight: 600; }
+  em.term { font-style: italic; }
+
+  code {
+    font-family: var(--mono);
+    font-size: 0.86em;
+    background: var(--code-bg);
+    padding: 1px 5px;
+    border-radius: 3px;
+  }
+  pre {
+    font-family: var(--mono);
+    font-size: 12.5px;
+    line-height: 1.6;
+    background: var(--panel);
+    border: 1px solid var(--rule);
+    border-left: 3px solid var(--accent);
+    padding: 14px 16px;
+    overflow-x: auto;
+    margin: 0 0 16px;
+  }
+  pre code { background: none; padding: 0; font-size: inherit; }
+
+  table { border-collapse: collapse; width: 100%; font-size: 14px; }
+  .scroller { overflow-x: auto; margin-bottom: 18px; }
+  th, td { text-align: left; padding: 9px 12px 9px 0; border-bottom: 1px solid var(--rule-soft); vertical-align: top; }
+  th {
+    font-family: var(--mono);
+    font-size: 10.5px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    font-weight: 500;
+    border-bottom: 1px solid var(--rule);
+    white-space: nowrap;
+  }
+  td.path, td.code, th.code { font-family: var(--mono); font-size: 12.5px; white-space: nowrap; }
+  td.desc { color: var(--ink-soft); }
+
+  .pill {
+    font-family: var(--mono);
+    font-size: 11px;
+    padding: 1px 7px;
+    border-radius: 999px;
+    border: 1px solid currentColor;
+    white-space: nowrap;
+  }
+  .s2 { color: var(--done); }
+  .s4 { color: var(--running); }
+  .s5 { color: var(--failed); }
+
+  /* ---------- pipeline diagram ---------- */
+  .pipeline { display: grid; gap: 0; margin: 20px 0 24px; }
+  .stage {
+    display: grid;
+    grid-template-columns: 116px minmax(0, 1fr) auto;
+    gap: 14px;
+    align-items: baseline;
+    padding: 11px 14px;
+    background: var(--panel);
+    border: 1px solid var(--rule);
+    border-bottom: none;
+  }
+  .stage:last-of-type { border-bottom: 1px solid var(--rule); }
+  .stage.guarantee { border-left: 3px solid var(--accent); background: var(--accent-soft); }
+  .stage .who { font-family: var(--mono); font-size: 11.5px; color: var(--ink-faint); letter-spacing: 0.04em; }
+  .stage .what { font-size: 14.5px; }
+  .stage .out { font-family: var(--mono); font-size: 11px; color: var(--ink-faint); white-space: nowrap; }
+  @media (max-width: 560px) {
+    .stage { grid-template-columns: 1fr; gap: 3px; }
+    .stage .out { white-space: normal; }
+  }
+
+  figure { margin: 0 0 20px; }
+  figcaption {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--ink-faint);
+    letter-spacing: 0.04em;
+    margin-top: 8px;
+  }
+  svg { max-width: 100%; height: auto; display: block; }
+
+  .callout {
+    border-left: 3px solid var(--accent);
+    background: var(--accent-soft);
+    padding: 14px 16px;
+    margin: 0 0 18px;
+  }
+  .callout p { margin: 0; max-width: 60ch; }
+  .callout .tag {
+    font-family: var(--mono);
+    font-size: 10.5px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--accent);
+    display: block;
+    margin-bottom: 5px;
+  }
+
+  ul.checks { list-style: none; margin: 0 0 18px; padding: 0; display: grid; gap: 9px; }
+  ul.checks li { display: grid; grid-template-columns: 18px minmax(0, 1fr); gap: 10px; font-size: 15px; }
+  ul.checks .box { font-family: var(--mono); color: var(--ink-faint); }
+  ul.checks li.done .box { color: var(--done); }
+  ul.checks li.done span.txt { color: var(--ink-faint); }
+
+  footer {
+    grid-column: 1 / -1;
+    border-top: 1px solid var(--rule);
+    padding-top: 16px;
+    font-family: var(--mono);
+    font-size: 11.5px;
+    color: var(--ink-faint);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    justify-content: space-between;
+  }
+  a { color: var(--accent); }
+</style>
+
+<div class="wrap">
+  <header class="masthead">
+    <p class="kicker">Engineering notes · rev. 16 Sep 2026</p>
+    <h1>Conveyor</h1>
+    <p class="standfirst">A job queue dashboard: React + TanStack Query on the front, NestJS + TypeORM + Postgres behind it. These notes cover what each file does, how one request travels, and why two browser tabs can never start the same job twice.</p>
+
+    <div class="facts">
+      <div class="fact"><div class="n">6</div><span class="l">HTTP routes</span></div>
+      <div class="fact"><div class="n">3</div><span class="l">migrations</span></div>
+      <div class="fact"><div class="n">8</div><span class="l">automated tests</span></div>
+      <div class="fact"><div class="n">1</div><span class="l">SQL statement guarding the race</span></div>
+    </div>
+  </header>
+
+  <nav class="toc" aria-label="Contents">
+    <ol>
+      <li><a href="#what"><span class="num">01</span> The product</a></li>
+      <li><a href="#flow"><span class="num">02</span> One request</a></li>
+      <li><a href="#race"><span class="num">03</span> The race</a></li>
+      <li><a href="#backend"><span class="num">04</span> Backend files</a></li>
+      <li><a href="#frontend"><span class="num">05</span> Frontend files</a></li>
+      <li><a href="#api"><span class="num">06</span> API reference</a></li>
+      <li><a href="#decisions"><span class="num">07</span> Decisions</a></li>
+      <li><a href="#left"><span class="num">08</span> What's left</a></li>
+    </ol>
+  </nav>
+
+  <main>
+    <!-- 01 -->
+    <section id="what">
+      <h2><span class="num">01</span> The product</h2>
+      <p class="lede">A <em class="term">job</em> here is a unit of background work a server owes someone: send a welcome email, render an invoice PDF, resize an upload. Websites queue this work instead of doing it during a request. Conveyor is the operator's screen for that queue.</p>
+
+      <p>Every job carries five required fields — <code>id</code>, <code>title</code>, <code>type</code>, <code>status</code>, <code>createdAt</code> — plus two additions: <code>priority</code> (0–10) and <code>version</code>, which exists purely to catch stale writes.</p>
+
+      <h3>What the dashboard does</h3>
+      <div class="scroller">
+        <table>
+          <thead><tr><th>Capability</th><th>Where it lives</th></tr></thead>
+          <tbody>
+            <tr><td>Create a job</td><td class="desc">Form → <code>POST /jobs</code>; status is never client-supplied</td></tr>
+            <tr><td>List and filter by status</td><td class="desc"><code>GET /jobs?status=</code>, newest first</td></tr>
+            <tr><td>Counts per status</td><td class="desc"><code>GET /jobs/stats</code>, a single <code>GROUP BY</code></td></tr>
+            <tr><td>Advance a job</td><td class="desc"><code>PATCH /jobs/:id/status</code>, only along legal transitions</td></tr>
+            <tr><td>Delete a job</td><td class="desc"><code>DELETE /jobs/:id</code> → 204, or 404 if already gone</td></tr>
+            <tr><td>Loading and error states</td><td class="desc">Skeleton rows, an error banner, a conflict notice</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- 02 -->
+    <section id="flow">
+      <h2><span class="num">02</span> One request, end to end</h2>
+      <p class="lede">A click on <strong>Start</strong> passes through five checkpoints. Each one rejects what the one above it cannot see, and only the last one is impossible to bypass.</p>
+
+      <div class="pipeline">
+        <div class="stage">
+          <span class="who">Browser</span>
+          <span class="what">Only renders buttons for legal transitions — a completed job shows none</span>
+          <span class="out">convenience</span>
+        </div>
+        <div class="stage">
+          <span class="who">ParseUUIDPipe</span>
+          <span class="what"><code>:id</code> must be a real UUID, so Postgres never receives junk</span>
+          <span class="out">400</span>
+        </div>
+        <div class="stage">
+          <span class="who">ValidationPipe</span>
+          <span class="what">Body must contain a known status and nothing else (<code>forbidNonWhitelisted</code>)</span>
+          <span class="out">400</span>
+        </div>
+        <div class="stage">
+          <span class="who">JobsController</span>
+          <span class="what">Route, status code, reads <code>If-Match</code>. No business rules</span>
+          <span class="out">—</span>
+        </div>
+        <div class="stage">
+          <span class="who">JobsService</span>
+          <span class="what">Asks the transition map which statuses may become the requested one</span>
+          <span class="out">—</span>
+        </div>
+        <div class="stage guarantee">
+          <span class="who">Postgres</span>
+          <span class="what"><code>UPDATE … WHERE id = $1 AND status IN ($2)</code> — the check <em class="term">is</em> the write</span>
+          <span class="out">200 / 409 / 404</span>
+        </div>
+      </div>
+
+      <div class="callout">
+        <span class="tag">Why it's layered this way</span>
+        <p>React can be skipped with curl. The pipes can't be skipped over HTTP. The service rule can only be skipped with direct SQL access. The <code>job_status</code> enum and the <code>pending</code> default can't be skipped at all.</p>
+      </div>
+    </section>
+
+    <!-- 03 -->
+    <section id="race">
+      <h2><span class="num">03</span> Two tabs, one job</h2>
+      <p class="lede">Both tabs show the job as <code>pending</code>. Both click Start within the same millisecond. Exactly one may win, and the loser must be told why rather than silently overwriting the winner.</p>
+
+      <figure>
+        <svg viewBox="0 0 640 210" role="img" aria-label="State machine: pending moves to running; running moves to completed or failed; completed and failed are terminal.">
+          <defs>
+            <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor"/>
+            </marker>
+          </defs>
+          <g style="color: var(--ink-faint)">
+            <line x1="126" y1="105" x2="228" y2="105" stroke="currentColor" stroke-width="1.5" marker-end="url(#arrow)"/>
+            <line x1="366" y1="92" x2="466" y2="58" stroke="currentColor" stroke-width="1.5" marker-end="url(#arrow)"/>
+            <line x1="366" y1="118" x2="466" y2="152" stroke="currentColor" stroke-width="1.5" marker-end="url(#arrow)"/>
+          </g>
+
+          <g font-family="IBM Plex Mono, monospace" font-size="13">
+            <rect x="16" y="83" width="110" height="44" rx="4" fill="var(--panel)" stroke="var(--pending)" stroke-width="1.5"/>
+            <text x="71" y="110" text-anchor="middle" fill="var(--pending)">pending</text>
+
+            <rect x="246" y="83" width="120" height="44" rx="4" fill="var(--panel)" stroke="var(--running)" stroke-width="1.5"/>
+            <text x="306" y="110" text-anchor="middle" fill="var(--running)">running</text>
+
+            <rect x="472" y="30" width="150" height="44" rx="4" fill="var(--panel)" stroke="var(--done)" stroke-width="1.5"/>
+            <text x="547" y="57" text-anchor="middle" fill="var(--done)">completed</text>
+
+            <rect x="472" y="132" width="150" height="44" rx="4" fill="var(--panel)" stroke="var(--failed)" stroke-width="1.5"/>
+            <text x="547" y="159" text-anchor="middle" fill="var(--failed)">failed</text>
+          </g>
+
+          <g font-family="IBM Plex Mono, monospace" font-size="10.5" fill="var(--ink-faint)">
+            <text x="547" y="96" text-anchor="middle">terminal — no way out</text>
+            <text x="547" y="196" text-anchor="middle">terminal — no way out</text>
+          </g>
+        </svg>
+        <figcaption>src/jobs/job-transitions.ts — the rules as data, not as <code>if</code> statements</figcaption>
+      </figure>
+
+      <h3>The fix is three lines</h3>
+      <pre><code>const result = await this.jobsRepository.update(
+  { id, status: In(allowedFrom) },   // the condition
+  { status: next },                  // the change
+);</code></pre>
+      <p>Which Postgres executes as one atomic statement:</p>
+      <pre><code>UPDATE jobs SET status = 'running', version = version + 1
+WHERE id = $1 AND status IN ('pending');</code></pre>
+
+      <p>The first request to reach the row matches and changes one row. The second evaluates <code>status IN ('pending')</code> against the <strong>already updated</strong> row, matches nothing, and reports <code>affected = 0</code>. There is no window between checking and writing, because they are the same statement.</p>
+
+      <h3>Reading the outcome</h3>
+      <div class="scroller">
+        <table>
+          <thead><tr><th>Rows changed</th><th>Meaning</th><th class="code">Response</th></tr></thead>
+          <tbody>
+            <tr><td class="code">1</td><td class="desc">Won the race; the fresh row is read back and returned</td><td><span class="pill s2">200 OK</span></td></tr>
+            <tr><td class="code">0</td><td class="desc">Job exists, wrong state — lost the race, or the job is terminal</td><td><span class="pill s4">409 Conflict</span></td></tr>
+            <tr><td class="code">0</td><td class="desc">Job exists, but <code>If-Match</code> named an older version</td><td><span class="pill s4">412 Precondition Failed</span></td></tr>
+            <tr><td class="code">0</td><td class="desc">No row with that id at all</td><td><span class="pill s5">404 Not Found</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="callout">
+        <span class="tag">Not a lock</span>
+        <p>This is an atomic conditional update (compare-and-set), not <code>SELECT … FOR UPDATE</code>. A pessimistic lock earns its cost when the decision needs data you must read and compute first — a bank balance minus a withdrawal. Here the whole condition fits in the <code>WHERE</code> clause, so a lock would add round trips and buy nothing.</p>
+      </div>
+
+      <p><code>scripts/race-test.ts</code> proves it: create a pending job, fire five concurrent PATCHes with <code>Promise.all</code>, and assert exactly one 200, four 409s, and a final status of <code>running</code>. It does <em class="term">not</em> assert which request wins — arrival order isn't controllable, and correctness doesn't depend on it.</p>
+    </section>
+
+    <!-- 04 -->
+    <section id="backend">
+      <h2><span class="num">04</span> Backend, file by file</h2>
+      <p class="lede">NestJS on Bun. <code>backend/conveyor-backend/src/</code>.</p>
+
+      <div class="scroller">
+        <table>
+          <thead><tr><th>File</th><th>Owns</th></tr></thead>
+          <tbody>
+            <tr><td class="path">main.ts</td><td class="desc">Boots Nest; registers the global ValidationPipe, the exception filter, and CORS locked to <code>CORS_ORIGINS</code></td></tr>
+            <tr><td class="path">app.module.ts</td><td class="desc">Wires config → TypeORM → JobsModule. <code>synchronize: false</code>, so schema only ever changes by migration</td></tr>
+            <tr><td class="path">config/env.validation.ts</td><td class="desc">Refuses to boot without a usable <code>DATABASE_URL</code>. A blank value fails here, not on the first request</td></tr>
+            <tr><td class="path">common/http-exception.filter.ts</td><td class="desc">One JSON error shape everywhere; unexpected errors log a stack server-side and return a generic message</td></tr>
+            <tr><td class="path">health/health.controller.ts</td><td class="desc"><code>GET /health</code> — for Render's health check and for waking the free tier</td></tr>
+            <tr><td class="path">jobs/job.entity.ts</td><td class="desc">The table: UUID key, <code>varchar</code> limits, Postgres enum defaulting to <code>pending</code>, <code>timestamptz</code>, and a <code>(status, created_at)</code> index matching the dashboard's query</td></tr>
+            <tr><td class="path">jobs/job-status.enum.ts</td><td class="desc">The four statuses, shared by entity, DTOs and rules</td></tr>
+            <tr><td class="path">jobs/job-transitions.ts</td><td class="desc">The transition map and <code>statusesThatCanBecome()</code>, which reads it backwards for the SQL <code>WHERE</code></td></tr>
+            <tr><td class="path">jobs/dto/*.dto.ts</td><td class="desc">The public contract: trimmed non-empty title and type, optional priority 0–10, status from the enum only</td></tr>
+            <tr><td class="path">jobs/jobs.service.ts</td><td class="desc">All business rules: create, list, the atomic status change, delete, and the <code>GROUP BY</code> counts</td></tr>
+            <tr><td class="path">jobs/jobs.controller.ts</td><td class="desc">Six routes, status codes, <code>If-Match</code> parsing, <code>ETag</code> on the response. No rules</td></tr>
+            <tr><td class="path">database/data-source.ts</td><td class="desc">A plain DataSource for the migration CLI, which runs outside Nest and has no ConfigService</td></tr>
+            <tr><td class="path">database/migrations/</td><td class="desc">CreateJobsTable → AddPriority → AddJobVersion, each with a working <code>down()</code></td></tr>
+            <tr><td class="path">scripts/race-test.ts</td><td class="desc">The concurrency proof described above</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- 05 -->
+    <section id="frontend">
+      <h2><span class="num">05</span> Frontend, file by file</h2>
+      <p class="lede">React 19 + TanStack Query + Tailwind v4. <code>frontend/src/</code>. Jobs are server state, so there is no client store and nothing to keep in sync by hand.</p>
+
+      <div class="scroller">
+        <table>
+          <thead><tr><th>File</th><th>Owns</th></tr></thead>
+          <tbody>
+            <tr><td class="path">types.ts</td><td class="desc"><code>Job</code>, <code>JobStatus</code>, <code>JobStats</code>, and <code>NEXT_STATUSES</code> — the UI's mirror of the server's rules, used only to decide which buttons to draw</td></tr>
+            <tr><td class="path">api/client.ts</td><td class="desc">Every call to the API. Turns non-OK responses into <code>ApiError</code>, sends <code>If-Match</code>, handles the empty 204 body</td></tr>
+            <tr><td class="path">api/api-error.ts</td><td class="desc"><code>ApiError</code> with <code>isConflict</code> (409 or 412) and a helper that flattens the server's message array into one sentence</td></tr>
+            <tr><td class="path">hooks/useJobs.ts</td><td class="desc">Queries and mutations. Status changes refetch on <code>onSettled</code> — a 409 is precisely when this tab's data is known to be stale</td></tr>
+            <tr><td class="path">App.tsx</td><td class="desc">Filter state, and the decision about what a failure means: conflicts become a notice, everything else an error</td></tr>
+            <tr><td class="path">components/StatusCounts.tsx</td><td class="desc">Four count tiles with loading skeletons</td></tr>
+            <tr><td class="path">components/CreateJobForm.tsx</td><td class="desc">Title, type, priority; disabled until the required fields are non-empty</td></tr>
+            <tr><td class="path">components/JobCard.tsx</td><td class="desc">One job; renders action buttons only for legal next states, plus a "Final state" label when there are none</td></tr>
+            <tr><td class="path">components/JobList.tsx</td><td class="desc">List, skeletons, empty state</td></tr>
+            <tr><td class="path">components/FilterTabs.tsx</td><td class="desc">All / pending / running / completed / failed</td></tr>
+            <tr><td class="path">components/Notice.tsx</td><td class="desc">Error and conflict banners</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- 06 -->
+    <section id="api">
+      <h2><span class="num">06</span> API reference</h2>
+      <div class="scroller">
+        <table>
+          <thead><tr><th class="code">Method</th><th class="code">Path</th><th>Body / query</th><th>Returns</th></tr></thead>
+          <tbody>
+            <tr><td class="code">GET</td><td class="code">/health</td><td class="desc">—</td><td class="desc">200 <code>{status, timestamp}</code></td></tr>
+            <tr><td class="code">POST</td><td class="code">/jobs</td><td class="desc"><code>{title, type, priority?}</code></td><td class="desc">201 job · 400 on bad or unknown fields</td></tr>
+            <tr><td class="code">GET</td><td class="code">/jobs</td><td class="desc"><code>?status=</code> optional</td><td class="desc">200 jobs, newest first · 400 on an unknown status</td></tr>
+            <tr><td class="code">GET</td><td class="code">/jobs/stats</td><td class="desc">—</td><td class="desc">200 counts for all four statuses</td></tr>
+            <tr><td class="code">PATCH</td><td class="code">/jobs/:id/status</td><td class="desc"><code>{status}</code>, optional <code>If-Match: &lt;version&gt;</code></td><td class="desc">200 job + <code>ETag</code> · 409 · 412 · 404 · 400</td></tr>
+            <tr><td class="code">DELETE</td><td class="code">/jobs/:id</td><td class="desc">—</td><td class="desc">204 · 404 · 400</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p>Every error, including Nest's own "no such route", comes back in one shape:</p>
+      <pre><code>{ "statusCode": 409,
+  "error": "CONFLICT",
+  "message": "Cannot change status from \"running\" to \"running\"",
+  "path": "/jobs/2f143b34…/status",
+  "timestamp": "2026-09-16T07:28:14.718Z" }</code></pre>
+    </section>
+
+    <!-- 07 -->
+    <section id="decisions">
+      <h2><span class="num">07</span> Decisions worth defending</h2>
+      <div class="scroller">
+        <table>
+          <thead><tr><th>Decision</th><th>Reasoning</th><th>Cost</th></tr></thead>
+          <tbody>
+            <tr><td>Conditional UPDATE over a row lock</td><td class="desc">The entire rule fits in a <code>WHERE</code> clause</td><td class="desc">Losers must refetch rather than wait their turn</td></tr>
+            <tr><td>UUID primary key</td><td class="desc">Unguessable; any instance can mint one; leaks no row count</td><td class="desc">16 bytes instead of 4</td></tr>
+            <tr><td>Postgres enum + <code>pending</code> default</td><td class="desc">Invalid statuses are impossible even from raw SQL</td><td class="desc">Adding a status needs a migration, not just a code edit</td></tr>
+            <tr><td>Explicit field mapping in the service</td><td class="desc">A DTO is a public contract; an entity is private storage. One must not silently become the other</td><td class="desc">Two edits to add a field instead of one</td></tr>
+            <tr><td>Migrations, never <code>synchronize</code></td><td class="desc">Schema changes are reviewable, ordered and reversible</td><td class="desc">A CLI step in every deploy</td></tr>
+            <tr><td>Statuses are lowercase only</td><td class="desc"><code>RUNNING</code> is rejected; the API doesn't guess what the client meant</td><td class="desc">Clients must match the enum exactly</td></tr>
+            <tr><td>A <code>running</code> job can be deleted</td><td class="desc">An operator's dashboard shouldn't refuse to remove a stuck job</td><td class="desc">Work in progress can vanish; refusing with 409 is the other reasonable call</td></tr>
+            <tr><td>No pagination</td><td class="desc">Right-sized for the assignment's data volume</td><td class="desc">Needs <code>limit</code>/cursor before real use</td></tr>
+            <tr><td>Bun as runtime and package manager</td><td class="desc">One tool; fast installs; runs TypeScript directly</td><td class="desc">Less trodden path than Node for Nest, so fewer answers when something breaks</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- 08 -->
+    <section id="left">
+      <h2><span class="num">08</span> What's left</h2>
+
+      <h3>Build</h3>
+      <ul class="checks">
+        <li class="done"><span class="box">[x]</span><span class="txt">Backend: entity, migrations, all six routes, validation, error filter, CORS</span></li>
+        <li class="done"><span class="box">[x]</span><span class="txt">Race-safe transitions + <code>If-Match</code> optimistic locking</span></li>
+        <li class="done"><span class="box">[x]</span><span class="txt">Frontend: counts, filter, create, transitions, delete, loading and error states</span></li>
+        <li><span class="box">[ ]</span><span>Deploy the API to Render — build <code>bun install &amp;&amp; bun run build</code>, start <code>bun run start:prod</code>, run migrations, set <code>DATABASE_URL</code> and <code>CORS_ORIGINS</code></span></li>
+        <li><span class="box">[ ]</span><span>Deploy the dashboard to Vercel with <code>VITE_API_URL</code>, then point <code>CORS_ORIGINS</code> at the Vercel domain</span></li>
+        <li><span class="box">[ ]</span><span>README: setup, decisions, the concurrency answer, assumptions, trade-offs, future work</span></li>
+        <li><span class="box">[ ]</span><span>Delete the test jobs from the database before submitting</span></li>
+      </ul>
+
+      <h3>Tests still to run</h3>
+      <p>Earlier attempts at these used a URL with a doubled slash (<code>/jobs//&lt;id&gt;/status</code>), so Nest answered "no such route" and the handler never ran. Repeat them against a single-slash URL.</p>
+      <div class="scroller">
+        <table>
+          <thead><tr><th>#</th><th>Request</th><th>Expected</th></tr></thead>
+          <tbody>
+            <tr><td class="code">1</td><td class="desc"><code>If-Match: 1</code> on a fresh pending job → running</td><td><span class="pill s2">200</span> version becomes 2</td></tr>
+            <tr><td class="code">2</td><td class="desc">Same stale <code>If-Match: 1</code> again → completed</td><td><span class="pill s4">412</span> modified by someone else</td></tr>
+            <tr><td class="code">3</td><td class="desc"><code>If-Match: 2</code> → completed</td><td><span class="pill s2">200</span> version becomes 3</td></tr>
+            <tr><td class="code">4</td><td class="desc"><code>If-Match: abc</code></td><td><span class="pill s5">400</span> must be a version number</td></tr>
+            <tr><td class="code">5</td><td class="desc">Valid but unknown UUID, single slash</td><td><span class="pill s5">404</span> <code>Job … not found</code></td></tr>
+            <tr><td class="code">6</td><td class="desc"><code>GET /jobs/stats</code> cross-checked against <code>GET /jobs</code></td><td><span class="pill s2">200</span> counts agree</td></tr>
+            <tr><td class="code">7</td><td class="desc"><code>DELETE</code> a job, then delete it again</td><td><span class="pill s2">204</span> then <span class="pill s5">404</span></td></tr>
+            <tr><td class="code">8</td><td class="desc">Two browser tabs both click Start on one job</td><td><span class="pill s2">200</span> + conflict notice in the other tab</td></tr>
+            <tr><td class="code">9</td><td class="desc"><code>bun scripts/race-test.ts</code> against the deployed API</td><td><span class="pill s2">PASS</span> 1 winner, 4 conflicts</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>With more time</h3>
+      <p>Pagination on <code>GET /jobs</code>; a real worker process that picks up pending jobs with <code>FOR UPDATE SKIP LOCKED</code> instead of a human clicking Start; an idempotency key on create so a double-click can't make two jobs; a shared types package so <code>Job</code> is declared once; Swagger for a browsable route list; and a retry path that creates a new job linked to the failed one rather than reviving a terminal row.</p>
+    </section>
+
+    <footer>
+      <span>Conveyor · React 19 · NestJS 12 · TypeORM 0.3 · Postgres (Neon) · Bun 1.3</span>
+      <span>Notes compiled 16 Sep 2026</span>
+    </footer>
+  </main>
+</div>

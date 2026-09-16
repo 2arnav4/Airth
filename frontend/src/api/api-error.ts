@@ -3,12 +3,12 @@
  * conflict (409) or a stale version (412) differently from a real error.
  */
 export class ApiError extends Error {
-  constructor(
-    readonly status: number,
-    message: string,
-  ) {
+  readonly status: number;
+
+  constructor(status: number, message: string) {
     super(message);
     this.name = 'ApiError';
+    this.status = status;
   }
 
   /** Someone else changed this job first. */
